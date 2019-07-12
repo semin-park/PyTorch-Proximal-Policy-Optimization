@@ -2,21 +2,22 @@ import time
 import torch, numpy as np
 import matplotlib.pyplot as plt
 
-def timing_wrapper(func):
+def timing_wrapper(f):
     def wrapper(*args, **kwargs):
-        '''source: http://www.daniweb.com/code/snippet368.html'''
         t1 = time.time()
-        res = func(*args, **kwargs)
+        out = f(*args, **kwargs)
         t2 = time.time()
-        return (t2 - t1), res
+        if out is None:
+            return (t2 - t1)
+        return out, (t2 - t1)
     return wrapper
 
 def plot(cur_step, stat, name):
     plt.figure(figsize=(20,10))
 
     plt.subplot(231)
-    last_10 = stat['scores'][-10:]
-    plt.title(f'Running avg. score: {np.mean(last_10):.2f}, Frame: {cur_step}')
+    last_100 = stat['scores'][-100:]
+    plt.title(f'Running avg. score: {np.mean(last_100):.2f}, Frame: {cur_step}')
     plt.xlabel('# episodes')
     plt.ylabel('score')
     plt.plot(stat['scores'])
@@ -43,8 +44,8 @@ def plot(cur_step, stat, name):
     plt.plot(stat['entropies'])
 
     plt.subplot(235)
-    last_10k = stat['steps'][-10000:]
-    plt.title(f'step: {np.mean(last_10k):.4f} (mean of 10K)')
+    last_100 = stat['steps'][-100:]
+    plt.title(f'step: {np.mean(last_100):.4f} (mean of 100)')
     plt.xlabel('# episodes')
     plt.ylabel('step')
     plt.plot(stat['steps'])

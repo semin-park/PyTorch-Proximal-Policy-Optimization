@@ -1,7 +1,7 @@
 from collections import deque
 
 import gym
-from baselines.common.atari_wrappers import NoopResetEnv, MaxAndSkipEnv
+from baselines.common.atari_wrappers import NoopResetEnv, MaxAndSkipEnv, FireResetEnv, EpisodicLifeEnv
 import numpy as np
 import cv2
 
@@ -92,12 +92,17 @@ class ChannelFirstFrameStack(gym.Wrapper):
         state = np.concatenate(self.frames, axis=0).astype(np.float32)
         return state, reward, done, info
 
-def make_env(env_name='PongNoFrameskip-v4', size=84, skip=4, is_train=True):
+def make_env(env_name='PongNoFrameskip-v4', size=84, skip=4, scale=True, is_train=True):
     env = gym.make(env_name)
-    env = NoopResetEnv(env, noop_max=300)
+    env = NoopResetEnv(env, noop_max=30)
     if is_train:
         env = MaxAndSkipEnv(env, skip=skip)
+    if env.unwrapped.ale.lives() > 0:
+        env = EpisodicLifeEnv(env)
+    if 'FIRE' in env.unwrapped.get_action_meanings():
+        env = FireResetEnv(env)
     env = WarpFrame(env, width=size, height=size, grayscale=True) # obs_space is now (84,84,1)
-    env = ScaledFloatFrame(env)
+    if scale:
+        env = ScaledFloatFrame(env)
     env = ChannelFirstFrameStack(env, 4)
     return env
